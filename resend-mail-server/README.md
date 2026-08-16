@@ -59,11 +59,8 @@ JRE runtime stage) ready for Render's Docker deployment.
    - `MAIL_FROM`
 4. Render automatically injects `PORT`; `application.properties` already
    binds to it (`server.port=${PORT:8080}`), so no extra config is needed.
-5. Deploy. Render's health check will hit `/` by default — if you want a
-   dedicated health check path, set it to `/api/mail/send` with method
-   `POST` is not appropriate for GET-based checks, so leaving the default
-   root path (which returns a generic 404 but confirms the app is up) is
-   fine, or add a lightweight `/health` endpoint if you'd like a cleaner check.
+5. Deploy. `GET /` and `GET /health` both return `{"status":"ok"}`, so
+   Render's default root-path health check works as-is.
 
 To build and run the image locally first:
 
@@ -105,6 +102,10 @@ curl -X POST http://localhost:8080/api/mail/send \
   "error": "Invalid request data"
 }
 ```
+
+**Unknown path** — `404`, **wrong method** — `405`, **wrong content type** —
+`415`. Every response is JSON; the HTML whitelabel error page is disabled and
+the `Accept` header is ignored.
 
 **Resend rejected or could not be reached** — `502 Bad Gateway`
 
