@@ -41,8 +41,8 @@ public class MailService {
             @Value("${mail.from}") String mailFrom,
             @Value("${mail.secret}") String mailSecret) {
         this.restTemplate = restTemplateBuilder
-                .connectTimeout(Duration.ofSeconds(5))
-                .readTimeout(Duration.ofSeconds(10))
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(10))
                 .build();
         this.resendApiKey = resendApiKey;
         this.mailFrom = mailFrom;
