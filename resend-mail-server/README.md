@@ -8,13 +8,14 @@ no JWT/OAuth.
 
 Exposes exactly one endpoint, `POST /api/mail/send`, which:
 
-1. Compares the `secret` field in the request against the server-side
-   `MAIL_SECRET` environment variable.
-2. Returns `401` if the secret is invalid.
-3. Otherwise sends an email through the Resend API, using `content` as
-   the HTML body and `MAIL_FROM` as the sender.
-4. Returns a simple JSON success/failure response. Resend API keys,
-   secrets, and internal exception details are never returned to the client.
+1. Sends an email through the Resend API, using `content` as the HTML
+   body and `MAIL_FROM` as the sender.
+2. Returns a simple JSON success/failure response. Resend API keys and
+   internal exception details are never returned to the client.
+
+The endpoint requires no caller authentication - no `Authorization`
+header, no shared secret. Restrict access at the network/proxy layer if
+you need it.
 
 ## Requirements
 
@@ -27,14 +28,12 @@ Exposes exactly one endpoint, `POST /api/mail/send`, which:
 | Variable         | Description                                    |
 |-------------------|--------------------------------------------------|
 | `RESEND_API_KEY`  | Your Resend API key                              |
-| `MAIL_SECRET`     | Shared secret that callers must send in `secret` |
 | `MAIL_FROM`       | Sender address used for every outgoing email     |
 
 Set them before running, for example:
 
 ```bash
 export RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx
-export MAIL_SECRET=some-long-random-secret
 export MAIL_FROM="Your App <notifications@yourdomain.com>"
 ```
 
@@ -57,7 +56,6 @@ JRE runtime stage) ready for Render's Docker deployment.
    Dockerfile**, pointing at this repo (Dockerfile at the repo root).
 3. Under **Environment**, add:
    - `RESEND_API_KEY`
-   - `MAIL_SECRET`
    - `MAIL_FROM`
 4. Render automatically injects `PORT`; `application.properties` already
    binds to it (`server.port=${PORT:8080}`), so no extra config is needed.
@@ -73,7 +71,6 @@ To build and run the image locally first:
 docker build -t resend-mail-server .
 docker run -p 8080:8080 \
   -e RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx \
-  -e MAIL_SECRET=some-long-random-secret \
   -e MAIL_FROM="Your App <notifications@yourdomain.com>" \
   resend-mail-server
 ```
@@ -84,7 +81,6 @@ docker run -p 8080:8080 \
 curl -X POST http://localhost:8080/api/mail/send \
   -H "Content-Type: application/json" \
   -d '{
-    "secret": "some-long-random-secret",
     "to": "receiver@example.com",
     "subject": "Test email",
     "content": "<h1>Hello</h1><p>This is a test email.</p>"
@@ -98,15 +94,6 @@ curl -X POST http://localhost:8080/api/mail/send \
 ```json
 {
   "success": true
-}
-```
-
-**Invalid secret** — `401 Unauthorized`
-
-```json
-{
-  "success": false,
-  "error": "Invalid secret"
 }
 ```
 
@@ -137,10 +124,8 @@ mvn test
 Tests mock `MailService`, so they run without a real `RESEND_API_KEY` and
 never make a real network call. They cover:
 
-- Invalid secret returns `401`
 - A valid request reaches `MailService.sendEmail(...)`
 - Invalid request data returns `400`
-- `MailService`'s secret comparison logic (valid / invalid / null secret)
 
 ## Project structure
 
@@ -161,6 +146,5 @@ resend-mail-server/
     │   │   └── service/MailService.java
     │   └── resources/application.properties
     └── test/java/com/example/mail/
-        ├── controller/MailControllerTest.java
-        └── service/MailServiceTest.java
+        └── controller/MailControllerTest.java
 ```

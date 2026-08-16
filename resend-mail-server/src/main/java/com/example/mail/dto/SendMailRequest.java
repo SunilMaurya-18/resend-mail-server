@@ -8,9 +8,6 @@ import jakarta.validation.constraints.NotBlank;
  */
 public record SendMailRequest(
 
-        @NotBlank(message = "secret is required")
-        String secret,
-
         @NotBlank(message = "to is required")
         @Email(message = "to must be a valid email address")
         String to,

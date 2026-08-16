@@ -22,8 +22,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Web-layer tests for MailController.
  * <p>
- * MailService is mocked, so these tests never need a real RESEND_API_KEY,
- * MAIL_SECRET, or MAIL_FROM value and never make a real network call.
+ * MailService is mocked, so these tests never need a real RESEND_API_KEY or
+ * MAIL_FROM value and never make a real network call.
  */
 @WebMvcTest(MailController.class)
 class MailControllerTest {
@@ -38,31 +38,10 @@ class MailControllerTest {
     private MailService mailService;
 
     @Test
-    void invalidSecretReturns401() throws Exception {
-        when(mailService.isSecretValid(anyString())).thenReturn(false);
-
-        Map<String, String> requestBody = Map.of(
-                "secret", "wrong-secret",
-                "to", "receiver@example.com",
-                "subject", "Test email",
-                "content", "<h1>Hello</h1>"
-        );
-
-        mockMvc.perform(post("/api/mail/send")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(requestBody)))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.error").value("Invalid secret"));
-    }
-
-    @Test
     void validRequestReachesMailService() throws Exception {
-        when(mailService.isSecretValid(anyString())).thenReturn(true);
         when(mailService.sendEmail(anyString(), anyString(), anyString())).thenReturn(true);
 
         Map<String, String> requestBody = Map.of(
-                "secret", "correct-secret",
                 "to", "receiver@example.com",
                 "subject", "Test email",
                 "content", "<h1>Hello</h1><p>This is a test email.</p>"
@@ -82,7 +61,6 @@ class MailControllerTest {
     void invalidRequestDataReturns400() throws Exception {
         // Missing "to", blank "subject", missing "content"
         Map<String, String> requestBody = Map.of(
-                "secret", "some-secret",
                 "subject", ""
         );
 

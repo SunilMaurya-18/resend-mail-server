@@ -26,11 +26,6 @@ public class MailController {
 
     @PostMapping("/send")
     public ResponseEntity<MailResponse> send(@Valid @RequestBody SendMailRequest request) {
-        if (!mailService.isSecretValid(request.secret())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(MailResponse.failure("Invalid secret"));
-        }
-
         boolean sent = mailService.sendEmail(request.to(), request.subject(), request.content());
 
         if (sent) {
