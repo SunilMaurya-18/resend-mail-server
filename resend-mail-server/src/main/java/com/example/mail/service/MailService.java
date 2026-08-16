@@ -72,4 +72,3 @@ public class MailService {
             return false;
         }
     }
-}

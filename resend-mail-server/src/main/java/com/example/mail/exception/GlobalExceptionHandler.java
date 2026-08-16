@@ -6,13 +6,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /**
- * Keeps error handling minimal: invalid request data becomes a 400 with a
- * safe message, anything unexpected becomes a 500 with a safe message.
+ * Keeps error handling minimal: invalid request data becomes a 400, an
+ * unknown path becomes a 404, and anything unexpected becomes a 500 - all
+ * with a safe message.
  * Stack traces, secrets, and API keys are never returned to the client.
  */
 @RestControllerAdvice
@@ -30,6 +34,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<MailResponse> handleUnreadable(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(MailResponse.failure("Invalid request data"));
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<MailResponse> handleNotFound(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(MailResponse.failure("Not found"));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<MailResponse> handleMethodNotAllowed(HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(MailResponse.failure("Method not allowed"));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<MailResponse> handleUnsupportedMediaType(HttpMediaTypeNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(MailResponse.failure("Unsupported media type"));
     }
 
     @ExceptionHandler(Exception.class)
