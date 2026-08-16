@@ -103,6 +103,10 @@ curl -X POST http://localhost:8080/api/mail/send \
 }
 ```
 
+**Unknown path** — `404`, **wrong method** — `405`, **wrong content type** —
+`415`. Every response is JSON; the HTML whitelabel error page is disabled and
+the `Accept` header is ignored.
+
 **Resend rejected or could not be reached** — `502 Bad Gateway`
 
 ```json
