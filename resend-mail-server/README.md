@@ -47,6 +47,37 @@ mvn spring-boot:run
 
 The server starts on `http://localhost:8080`.
 
+## Deploying to Render
+
+The included `Dockerfile` is a multi-stage build (Maven build stage, slim
+JRE runtime stage) ready for Render's Docker deployment.
+
+1. Push this project to a Git repository.
+2. In Render, create a **New Web Service** → **Build and deploy from a
+   Dockerfile**, pointing at this repo (Dockerfile at the repo root).
+3. Under **Environment**, add:
+   - `RESEND_API_KEY`
+   - `MAIL_SECRET`
+   - `MAIL_FROM`
+4. Render automatically injects `PORT`; `application.properties` already
+   binds to it (`server.port=${PORT:8080}`), so no extra config is needed.
+5. Deploy. Render's health check will hit `/` by default — if you want a
+   dedicated health check path, set it to `/api/mail/send` with method
+   `POST` is not appropriate for GET-based checks, so leaving the default
+   root path (which returns a generic 404 but confirms the app is up) is
+   fine, or add a lightweight `/health` endpoint if you'd like a cleaner check.
+
+To build and run the image locally first:
+
+```bash
+docker build -t resend-mail-server .
+docker run -p 8080:8080 \
+  -e RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxx \
+  -e MAIL_SECRET=some-long-random-secret \
+  -e MAIL_FROM="Your App <notifications@yourdomain.com>" \
+  resend-mail-server
+```
+
 ## Example request
 
 ```bash
@@ -116,6 +147,8 @@ never make a real network call. They cover:
 ```text
 resend-mail-server/
 ├── pom.xml
+├── Dockerfile
+├── .dockerignore
 ├── README.md
 └── src/
     ├── main/
