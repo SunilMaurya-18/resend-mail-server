@@ -63,12 +63,31 @@ public class MailService {
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-        try {
-            ResponseEntity<String> response = restTemplate.postForEntity(RESEND_URL, entity, String.class);
-            return response.getStatusCode().is2xxSuccessful();
-        } catch (RestClientException ex) {
-            // Never log the API key or the raw request body - just enough to debug.
-            log.error("Resend request failed: {}", ex.getMessage());
+        ttry {
+            ResponseEntity<String> response =
+                    restTemplate.postForEntity(
+                            RESEND_URL,
+                            entity,
+                            String.class
+                    );
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Email accepted by Resend. Status: {}",
+                        response.getStatusCode());
+                log.info("Resend response: {}", response.getBody());
+                return true;
+            }
+
+            log.error(
+                    "Resend rejected email. Status: {}, Response: {}",
+                    response.getStatusCode(),
+                    response.getBody()
+            );
+
+            return false;
+
+        } catch(RestClientException ex){
+            log.error("Failed to connect to Resend: {}", ex.getMessage(), ex);
             return false;
         }
     }
